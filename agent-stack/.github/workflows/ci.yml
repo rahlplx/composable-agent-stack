@@ -1,0 +1,90 @@
+name: Composable Agent Stack — CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+env:
+  PYTHON_VERSION: "3.12"
+
+jobs:
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Install dependencies
+        run: pip install -e ".[dev]" hypothesis aiosqlite
+      - name: Run unit tests
+        run: |
+          python -m pytest tests/test_compression_manager.py tests/test_state_machine.py \
+            -v --tb=short --cov=orchestrator --cov-report=xml
+
+  property-contract-tests:
+    name: Property & Contract Tests
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Install dependencies
+        run: pip install -e ".[dev]" hypothesis aiosqlite
+      - name: Run property + contract tests
+        run: |
+          python -m pytest tests/property/ tests/contract/ -v --tb=short
+
+  chaos-integration-tests:
+    name: Chaos & Integration Tests
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Install dependencies
+        run: pip install -e ".[dev]" hypothesis aiosqlite
+      - name: Run chaos + integration tests
+        run: |
+          python -m pytest tests/chaos/ tests/test_integration.py -v --tb=short
+
+  full-regression:
+    name: Full Regression + RL Optimizer
+    runs-on: ubuntu-latest
+    needs: [property-contract-tests, chaos-integration-tests]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Install dependencies
+        run: pip install -e ".[dev]" hypothesis aiosqlite
+      - name: Run full regression
+        run: |
+          python -m pytest tests/ -v --tb=short --cov=orchestrator --cov-fail-under=70
+      - name: Run RL optimizer tests
+        run: python -m pytest tests/rl/ -v --tb=short
+
+  docker-build:
+    name: Docker Build Test
+    runs-on: ubuntu-latest
+    needs: full-regression
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Docker image
+        run: docker build -t composable-agent-stack:test .
+      - name: Verify image
+        run: |
+          docker run --rm composable-agent-stack:test \
+            python -c "from orchestrator.compression.manager import CompressionManager; print('OK')"
