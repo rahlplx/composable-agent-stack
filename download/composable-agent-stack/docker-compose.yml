@@ -1,0 +1,194 @@
+# ============================================================
+# Composable AI Agent Stack
+# Agent-S + Browser Use + OpenHands + LiteLLM
+# ============================================================
+# Zero vendor lock-in. Any API key. Local or cloud. Self-hosted.
+# ============================================================
+
+services:
+  # ============================================================
+  # LAYER 1: LiteLLM — Unified LLM Gateway
+  # ============================================================
+  # Exposes OpenAI-compatible API on port 4000
+  # All three agent tools point here instead of individual providers
+  # Supports 140+ providers, load balancing, fallbacks, cost tracking
+  # ============================================================
+  litellm:
+    image: ghcr.io/berriai/litellm:main-stable
+    container_name: litellm-proxy
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./litellm/config.yaml:/app/config.yaml:ro
+    command: ["--config=/app/config.yaml", "--port", "4000"]
+    environment:
+      DATABASE_URL: "postgresql://litellm:litellm_secret@litellm-db:5432/litellm"
+      STORE_MODEL_IN_DB: "True"
+    env_file:
+      - ./litellm/.env
+    depends_on:
+      litellm-db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c \"import urllib.request; urllib.request.urlopen('http://localhost:4000/health/liveliness')\""]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    networks:
+      - agent-stack
+
+  litellm-db:
+    image: postgres:16-alpine
+    container_name: litellm-db
+    environment:
+      POSTGRES_DB: litellm
+      POSTGRES_USER: litellm
+      POSTGRES_PASSWORD: litellm_secret
+    volumes:
+      - litellm_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d litellm -U litellm"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    networks:
+      - agent-stack
+
+  # ============================================================
+  # LAYER 2: Agent-S — Full Desktop Control
+  # ============================================================
+  # Controls native desktop apps: mouse, keyboard, screen
+  # Best for: RPA, desktop QA, legacy app integration
+  # Connects to LiteLLM via OpenAI-compatible base_url
+  # ============================================================
+  agent-s:
+    build:
+      context: ./agent-s
+      dockerfile: Dockerfile
+    container_name: agent-s
+    environment:
+      - DISPLAY=:99
+      - OPENAI_API_KEY=${LITELLM_MASTER_KEY:-sk-stack-master-key}
+      - OPENAI_BASE_URL=http://litellm:4000/v1
+      - AGENT_S_MODEL=${AGENT_S_MODEL:-gpt-4o}
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:ro       # Forward X11 for GUI (optional)
+      - ./agent-s/workspace:/workspace           # Shared workspace
+    depends_on:
+      litellm:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - agent-stack
+    profiles:
+      - desktop      # Only starts with: docker compose --profile desktop up
+
+  # ============================================================
+  # LAYER 2: Browser Use — Browser Automation
+  # ============================================================
+  # Controls Chromium via Playwright + AI
+  # Best for: web scraping, form filling, SaaS automation
+  # Connects to LiteLLM via ChatOpenAI(base_url=...)
+  # ============================================================
+  browser-use:
+    build:
+      context: ./browser-use
+      dockerfile: Dockerfile
+    container_name: browser-use
+    environment:
+      - OPENAI_API_KEY=${LITELLM_MASTER_KEY:-sk-stack-master-key}
+      - OPENAI_BASE_URL=http://litellm:4000/v1
+      - BROWSER_USE_MODEL=${BROWSER_USE_MODEL:-gpt-4o}
+      - ANONYMIZED_TELEMETRY=false
+    volumes:
+      - ./browser-use/workspace:/workspace
+      - ./browser-use/scripts:/scripts
+    depends_on:
+      litellm:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - agent-stack
+
+  # ============================================================
+  # LAYER 2: OpenHands — Software Development Agent
+  # ============================================================
+  # AI software engineer: writes code, runs tests, debugs
+  # Best for: code generation, bug fixing, CI/CD automation
+  # Connects to LiteLLM natively (built on LiteLLM SDK)
+  # ============================================================
+  openhands:
+    image: ghcr.io/all-hands-ai/openhands:main
+    container_name: openhands
+    ports:
+      - "3001:3000"
+    environment:
+      - LLM_MODEL=${OPENHANDS_MODEL:-gpt-4o}
+      - LLM_API_KEY=${LITELLM_MASTER_KEY:-sk-stack-master-key}
+      - LLM_BASE_URL=http://litellm:4000
+      - SANDBOX_RUNTIME_CONTAINER_IMAGE=ghcr.io/all-hands-ai/runtime:0.30
+      - WORKSPACE_MOUNT_PATH=/workspace
+    volumes:
+      - ./openhands/workspace:/workspace
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      litellm:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - agent-stack
+
+  # ============================================================
+  # LAYER 3: Ollama — Local Model Runner (Optional)
+  # ============================================================
+  # Run LLMs locally without any cloud API key
+  # LiteLLM routes to Ollama as a fallback provider
+  # ============================================================
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    restart: unless-stopped
+    networks:
+      - agent-stack
+    profiles:
+      - local-llm   # Only starts with: docker compose --profile local-llm up
+
+  # ============================================================
+  # LAYER 4: Monitoring & Observability (Optional)
+  # ============================================================
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    restart: unless-stopped
+    networks:
+      - agent-stack
+    profiles:
+      - monitoring
+
+networks:
+  agent-stack:
+    driver: bridge
+
+volumes:
+  litellm_pgdata:
+  ollama_data:
+  prometheus_data:

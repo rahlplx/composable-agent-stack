@@ -1,0 +1,146 @@
+# ============================================================
+# LiteLLM Proxy Configuration
+# ============================================================
+# This is the single source of truth for all LLM routing.
+# All three agent tools (Agent-S, Browser Use, OpenHands)
+# point to LiteLLM and never see the actual provider.
+#
+# How it works:
+#   1. Agent tool sends: POST /chat/completions { model: "gpt-4o" }
+#   2. LiteLLM looks up "gpt-4o" in model_list below
+#   3. LiteLLM routes to the actual provider (OpenAI, Anthropic, etc.)
+#   4. Response is normalized to OpenAI format and returned
+#
+# Benefits:
+#   - Swap providers without changing any agent tool config
+#   - Automatic failover if a provider goes down
+#   - Load balance across multiple keys/endpoints
+#   - Unified cost tracking across all tools and providers
+#   - Virtual keys with per-team budgets and rate limits
+# ============================================================
+
+model_list:
+  # ---- OpenAI GPT-4o (primary) ----
+  - model_name: gpt-4o
+    litellm_params:
+      model: openai/gpt-4o
+      api_key: os.environ/OPENAI_API_KEY
+
+  # ---- OpenAI GPT-4o-mini (cheap, fast) ----
+  - model_name: gpt-4o-mini
+    litellm_params:
+      model: openai/gpt-4o-mini
+      api_key: os.environ/OPENAI_API_KEY
+
+  # ---- Anthropic Claude Sonnet 4 (vision-capable, strong for CUA) ----
+  - model_name: claude-sonnet
+    litellm_params:
+      model: anthropic/claude-sonnet-4-20250514
+      api_key: os.environ/ANTHROPIC_API_KEY
+
+  # ---- Anthropic Claude 3.5 Haiku (fast, cheap) ----
+  - model_name: claude-haiku
+    litellm_params:
+      model: anthropic/claude-3-5-haiku-20241022
+      api_key: os.environ/ANTHROPIC_API_KEY
+
+  # ---- Google Gemini 2.0 Flash (fast, multimodal) ----
+  - model_name: gemini-flash
+    litellm_params:
+      model: gemini/gemini-2.0-flash
+      api_key: os.environ/GEMINI_API_KEY
+
+  # ---- Google Gemini 2.5 Pro (strong reasoning) ----
+  - model_name: gemini-pro
+    litellm_params:
+      model: gemini/gemini-2.5-pro-preview-05-06
+      api_key: os.environ/GEMINI_API_KEY
+
+  # ---- DeepSeek V3 (cheap, strong coding) ----
+  - model_name: deepseek
+    litellm_params:
+      model: deepseek/deepseek-chat
+      api_key: os.environ/DEEPSEEK_API_KEY
+
+  # ---- OpenRouter (access to 200+ models through one key) ----
+  - model_name: openrouter-auto
+    litellm_params:
+      model: openrouter/openai/gpt-4o
+      api_key: os.environ/OPENROUTER_API_KEY
+
+  # ---- Ollama (local models — no API key needed) ----
+  - model_name: llama3-local
+    litellm_params:
+      model: ollama/llama3
+      api_base: http://ollama:11434
+
+  - model_name: qwen2-local
+    litellm_params:
+      model: ollama/qwen2:7b
+      api_base: http://ollama:11434
+
+  # ---- vLLM (self-hosted model serving) ----
+  # - model_name: vllm-mistral
+  #   litellm_params:
+  #     model: openai/mistralai/Mistral-7B-Instruct-v0.3
+  #     api_base: http://vllm:8000/v1
+
+  # ---- AWS Bedrock (if you prefer managed) ----
+  # - model_name: bedrock-sonnet
+  #   litellm_params:
+  #     model: bedrock/anthropic.claude-sonnet-4-20250514-v1:0
+  #     aws_access_key_id: os.environ/AWS_ACCESS_KEY_ID
+  #     aws_secret_access_key: os.environ/AWS_SECRET_ACCESS_KEY
+  #     aws_region_name: us-east-1
+
+  # ---- Azure OpenAI (enterprise) ----
+  # - model_name: azure-gpt4o
+  #   litellm_params:
+  #     model: azure/gpt-4o
+  #     api_base: https://your-resource.openai.azure.com/
+  #     api_key: os.environ/AZURE_OPENAI_API_KEY
+  #     api_version: "2025-04-01-preview"
+
+# ============================================================
+# Router Settings — Load Balancing & Fallbacks
+# ============================================================
+router_settings:
+  routing_strategy: least-busy    # simple-shuffle | least-busy | latency-based-routing | cost-based-routing
+  num_retries: 3
+  timeout: 120
+  allowed_fails: 3
+  retry_after: 0
+  cooldown_time: 60
+
+  # Fallback chain: if primary model fails, try these in order
+  fallbacks:
+    - model_name: gpt-4o
+      fallbacks: [claude-sonnet, gemini-flash]
+    - model_name: claude-sonnet
+      fallbacks: [gpt-4o, gemini-flash]
+    - model_name: gemini-flash
+      fallbacks: [gpt-4o-mini, deepseek]
+
+# ============================================================
+# LiteLLM Module Settings
+# ============================================================
+litellm_settings:
+  drop_params: True               # Drop unsupported params instead of erroring
+  set_verbose: False
+  # success_callback: ["langfuse"] # Optional: send logs to LangFuse for observability
+  # callbacks: ["otel"]            # Optional: OpenTelemetry tracing
+
+# ============================================================
+# General Proxy Settings
+# ============================================================
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY
+  database_url: os.environ/DATABASE_URL
+
+  # Rate limits (global defaults)
+  max_budget: 0                    # 0 = unlimited (set per virtual key instead)
+  budget_duration: 30d             # Reset budget every 30 days
+
+  # Alerting
+  # alerting: ["email"]
+  # alerting_threshold: 100        # Alert when spend exceeds $100

@@ -1,0 +1,61 @@
+# ============================================================
+# OpenHands — LiteLLM Integration
+# ============================================================
+# OpenHands uses LiteLLM natively as its LLM SDK.
+# This is the smoothest integration of the three tools.
+#
+# Three ways to configure:
+#   1. Web UI Settings (easiest)
+#   2. config.toml file
+#   3. Environment variables
+# ============================================================
+
+# ============================================================
+# Method 1: Web UI Settings
+# ============================================================
+# 1. Open OpenHands at http://localhost:3001
+# 2. Go to Settings → LLM tab
+# 3. Enable "Advanced options"
+# 4. Set:
+#    - Custom Model: gpt-4o
+#    - Base URL: http://localhost:4000
+#    - API Key: sk-stack-master-key-change-me
+# 5. Save and start a conversation
+
+# ============================================================
+# Method 2: config.toml
+# ============================================================
+# Place this in ~/.openhands/config.toml
+
+[llm]
+model = "gpt-4o"
+api_key = "sk-stack-master-key-change-me"
+base_url = "http://localhost:4000"
+
+# Optional: Configure a condenser for long conversations
+[llm.condenser]
+type = "observation"
+
+# ============================================================
+# Method 3: Environment Variables (used in docker-compose.yml)
+# ============================================================
+# LLM_MODEL=gpt-4o
+# LLM_API_KEY=sk-stack-master-key-change-me
+# LLM_BASE_URL=http://litellm:4000
+
+# ============================================================
+# Example: Using OpenHands SDK programmatically
+# ============================================================
+"""
+from openhands.sdk.llm import LLM
+from pydantic import SecretStr
+
+llm = LLM(
+    model="openai/gpt-4o",                          # LiteLLM routing prefix
+    api_key=SecretStr("sk-stack-master-key-change-me"),
+    base_url="http://localhost:4000",                # LiteLLM proxy
+)
+
+# The LLM object can now be used with any OpenHands agent
+# It will route all requests through LiteLLM to your configured provider
+"""
