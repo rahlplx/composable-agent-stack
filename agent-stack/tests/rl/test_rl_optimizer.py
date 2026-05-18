@@ -9,7 +9,7 @@ Verifies that the RL engine learns correctly:
 
 import pytest
 
-from tests.rl.optimizer import RLTestOptimizer, TestScore
+from tests.rl.optimizer import RLTestOptimizer, ScoreEntry
 
 
 @pytest.fixture

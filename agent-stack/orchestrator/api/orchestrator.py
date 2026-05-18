@@ -21,7 +21,7 @@ from typing import Any, Optional
 
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from orchestrator.compression.manager import CompressionManager, Priority
 from orchestrator.state.models import (
@@ -33,12 +33,17 @@ from orchestrator.adapters.agents import AgentSAdapter
 from orchestrator.adapters.browser import BrowserUseAdapter
 from orchestrator.adapters.openhands import OpenHandsAdapter
 from orchestrator.adapters.base import PlatformAdapter
+from orchestrator.adapters.circuit_breaker import CircuitBreaker, CircuitState
+from orchestrator.metrics import (
+    WORKFLOWS_TOTAL, TASKS_TOTAL, TASK_DURATION_SECONDS,
+    ACTIVE_TASKS, COMPRESSION_BYTES, set_circuit_breaker_state,
+)
 
 
 # ─── Pydantic Models (API) ──────────────────────────────────────────────────
 
 class SubmitWorkflowRequest(BaseModel):
-    user_request: str
+    user_request: str = Field(min_length=1)
     tasks: list[dict] | None = None  # explicit DAG specs, or None for auto-decompose
 
 
@@ -98,8 +103,8 @@ class OrchestratorService:
         self.litellm_base_url = litellm_base_url
         self.litellm_api_key = litellm_api_key
 
-        # Platform adapters
-        self.adapters: dict[Platform, PlatformAdapter] = {
+        # Platform adapters wrapped in circuit breakers
+        self._raw_adapters: dict[Platform, PlatformAdapter] = {
             Platform.AGENT_S: AgentSAdapter(
                 litellm_base_url=litellm_base_url,
                 litellm_api_key=litellm_api_key,
@@ -113,6 +118,13 @@ class OrchestratorService:
                 litellm_api_key=litellm_api_key,
             ),
         }
+        self.adapters: dict[Platform, CircuitBreaker | PlatformAdapter] = {
+            platform: CircuitBreaker(adapter)
+            for platform, adapter in self._raw_adapters.items()
+        }
+        # Initialize circuit breaker gauges
+        for platform in self.adapters:
+            set_circuit_breaker_state(platform.value, "closed")
 
         # In-memory workflow/task store (production: PostgreSQL)
         self.workflows: dict[str, Workflow] = {}
@@ -146,6 +158,7 @@ class OrchestratorService:
 
     async def submit_workflow(self, request: SubmitWorkflowRequest) -> Workflow:
         """Submit a new workflow for execution."""
+        WORKFLOWS_TOTAL.inc()
         workflow = Workflow(user_request=request.user_request)
 
         if request.tasks:
@@ -223,13 +236,22 @@ class OrchestratorService:
                 continue
 
             try:
+                import time as _time
+                start = _time.monotonic()
                 job_id = await adapter.submit(
                     task_id=task.id,
                     action_type=task.action_type,
                     input_data=task.input_data,
                 )
+                elapsed = _time.monotonic() - start
+                TASK_DURATION_SECONDS.observe(elapsed)
                 self._task_to_job[task.id] = job_id
                 transition_task(task, TaskStatus.RUNNING)
+                ACTIVE_TASKS.inc()
+                TASKS_TOTAL.labels(platform=task.platform.value, status="running").inc()
+                # Update circuit breaker gauge
+                if isinstance(adapter, CircuitBreaker):
+                    set_circuit_breaker_state(task.platform.value, adapter.state.value)
                 await self._broadcast({
                     "event": "task_running",
                     "task_id": task.id,
@@ -237,6 +259,9 @@ class OrchestratorService:
                     "job_id": job_id,
                 })
             except Exception as e:
+                TASKS_TOTAL.labels(platform=task.platform.value, status="failed").inc()
+                if isinstance(adapter, CircuitBreaker):
+                    set_circuit_breaker_state(task.platform.value, adapter.state.value)
                 transition_task(task, TaskStatus.FAILED, error=str(e))
                 await self._handle_failure(task)
 
@@ -260,6 +285,8 @@ class OrchestratorService:
                     result = await adapter.get_result(job_id)
                     task.result = result.output
                     transition_task(task, TaskStatus.COMPLETED)
+                    ACTIVE_TASKS.dec()
+                    TASKS_TOTAL.labels(platform=task.platform.value, status="completed").inc()
                     await self._broadcast({
                         "event": "task_completed",
                         "task_id": task.id,
@@ -267,6 +294,8 @@ class OrchestratorService:
                     })
                     await self._check_workflow_completion(task.workflow_id)
                 elif status == "failed":
+                    ACTIVE_TASKS.dec()
+                    TASKS_TOTAL.labels(platform=task.platform.value, status="failed").inc()
                     transition_task(task, TaskStatus.FAILED, error="Platform reported failure")
                     await self._handle_failure(task)
             except Exception as e:

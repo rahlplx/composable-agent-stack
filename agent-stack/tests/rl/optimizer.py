@@ -71,7 +71,7 @@ CREATE INDEX IF NOT EXISTS idx_scores_priority ON test_scores(priority_score DES
 
 
 @dataclass
-class TestScore:
+class ScoreEntry:
     """RL-learned priority score for a test."""
     test_name: str
     priority_score: float = 0.5     # 0.0 (skip) to 1.0 (must run)
@@ -111,7 +111,7 @@ class TestScore:
         return asdict(self)
 
     @classmethod
-    def from_row(cls, row: sqlite3.Row) -> TestScore:
+    def from_row(cls, row: sqlite3.Row) -> ScoreEntry:
         return cls(**dict(row))
 
 
@@ -178,9 +178,9 @@ class RLTestOptimizer:
         row = await cursor.fetchone()
 
         if row is None:
-            score = TestScore(test_name=test_name)
+            score = ScoreEntry(test_name=test_name)
         else:
-            score = TestScore.from_row(row)
+            score = ScoreEntry.from_row(row)
 
         # Update counts
         score.total_runs += 1
@@ -234,7 +234,7 @@ class RLTestOptimizer:
              score.avg_duration_ms, score.flakiness_score, score.last_updated)
         )
 
-    def _calculate_priority(self, score: TestScore) -> float:
+    def _calculate_priority(self, score: ScoreEntry) -> float:
         """RL reward calculation: priority score.
 
         High priority = likely to catch regressions + fast + stable
@@ -336,7 +336,7 @@ class RLTestOptimizer:
 
     # ── Reporting ────────────────────────────────────────────────────
 
-    async def get_scores(self) -> list[TestScore]:
+    async def get_scores(self) -> list[ScoreEntry]:
         """Get all test scores."""
         if self._db is None:
             return []
@@ -344,7 +344,7 @@ class RLTestOptimizer:
             "SELECT * FROM test_scores ORDER BY priority_score DESC"
         )
         rows = await cursor.fetchall()
-        return [TestScore.from_row(r) for r in rows]
+        return [ScoreEntry.from_row(r) for r in rows]
 
     async def flaky_report(self) -> list[dict]:
         """Get tests flagged as flaky."""

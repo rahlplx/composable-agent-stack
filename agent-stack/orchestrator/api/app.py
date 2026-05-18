@@ -20,11 +20,12 @@ from pathlib import Path
 from fastapi import FastAPI, HTTPException, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 
-from orchestrator.compression.manager import CompressionManager
+from orchestrator.compression.manager import CompressionManager, Priority
 from orchestrator.api.orchestrator import (
     OrchestratorService, SubmitWorkflowRequest,
     TaskResponse, WorkflowResponse, CompactResponse, SnapshotResponse,
 )
+from orchestrator.metrics import setup_metrics
 
 
 # ─── Lifespan ────────────────────────────────────────────────────────────────
@@ -64,6 +65,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Register Prometheus /metrics endpoint
+setup_metrics(app)
 
 
 # ─── Workflow Routes ─────────────────────────────────────────────────────────
@@ -221,13 +225,13 @@ async def store_context(
     value: dict,
     session_id: str | None = None,
     category: str = "general",
-    priority: str = "medium",
+    priority: Priority = Priority.MEDIUM,
 ):
     """Store a context entry in execution memory."""
     mem: CompressionManager = app.state.mem
     entry_id = await mem.store(
         key=key, value=value, session_id=session_id,
-        category=category, priority=Priority(priority),
+        category=category, priority=priority,
     )
     return {"id": entry_id, "key": key}
 
