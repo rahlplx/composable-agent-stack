@@ -11,3 +11,11 @@ Key design goals:
 - Compact history is auditable
 - TTL cleanup for stale sessions
 """
+
+from orchestrator.compression.manager import CompressionManager, Priority, SessionStatus, CompactResult
+from orchestrator.compression.autocompact import AutoCompactDaemon
+
+__all__ = [
+    "CompressionManager", "Priority", "SessionStatus", "CompactResult",
+    "AutoCompactDaemon",
+]

@@ -15,8 +15,6 @@ Transitions:
 - HALF_OPEN → OPEN:    On a failed call.
 """
 
-from __future__ import annotations
-
 import time
 from enum import Enum
 from typing import Optional

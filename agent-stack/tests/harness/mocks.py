@@ -7,11 +7,9 @@ Instead of hitting real services, tests use these mocks with:
 - Delay injection (timeout testing)
 """
 
-from __future__ import annotations
-
 import asyncio
 import uuid
-from typing import Any, Optional
+from typing import Any
 from dataclasses import dataclass, field
 
 from orchestrator.adapters.base import PlatformAdapter, AdapterResult

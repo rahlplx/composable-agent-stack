@@ -5,12 +5,11 @@ state machine transitions → completion, with the CompressionManager
 tracking execution context.
 """
 
-import asyncio
 import pytest
 
-from orchestrator.compression.manager import CompressionManager, Priority
+from orchestrator.compression.manager import CompressionManager
 from orchestrator.api.orchestrator import OrchestratorService, SubmitWorkflowRequest
-from orchestrator.state.models import TaskStatus, WorkflowStatus, Platform
+from orchestrator.state.models import TaskStatus, Platform
 
 
 @pytest.fixture

@@ -35,8 +35,6 @@ DESIGN DECISIONS:
   - low entries can be aggressively compressed
 """
 
-from __future__ import annotations
-
 import json
 import sqlite3
 import uuid
@@ -91,7 +89,7 @@ class Session:
         }
 
     @classmethod
-    def from_row(cls, row: sqlite3.Row) -> Session:
+    def from_row(cls, row: sqlite3.Row) -> "Session":
         d = dict(row)
         d["status"] = SessionStatus(d["status"])
         d["metadata"] = json.loads(d.get("metadata", "{}"))
@@ -130,7 +128,7 @@ class ContextEntry:
         }
 
     @classmethod
-    def from_row(cls, row: sqlite3.Row) -> ContextEntry:
+    def from_row(cls, row: sqlite3.Row) -> "ContextEntry":
         d = dict(row)
         d["value"] = json.loads(d.get("value", "null"))
         d["priority"] = Priority(d.get("priority", "medium"))

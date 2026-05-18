@@ -4,11 +4,7 @@ Wraps Agent-S desktop automation (click, type, screenshot)
 connected via LiteLLM alias `agent-s-smart`.
 """
 
-from __future__ import annotations
-
-import json
 import uuid
-from typing import Any
 
 import httpx
 

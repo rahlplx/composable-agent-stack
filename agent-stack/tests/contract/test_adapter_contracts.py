@@ -11,7 +11,7 @@ These tests verify that ALL adapter implementations obey the contract:
 
 import pytest
 
-from orchestrator.adapters.base import PlatformAdapter, AdapterResult
+from orchestrator.adapters.base import AdapterResult
 from orchestrator.adapters.agents import AgentSAdapter
 from orchestrator.adapters.browser import BrowserUseAdapter
 from orchestrator.adapters.openhands import OpenHandsAdapter

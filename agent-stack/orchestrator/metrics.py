@@ -13,17 +13,12 @@ Metrics:
 - agent_stack_llm_tokens_total          — Counter
 """
 
-from __future__ import annotations
-
-from typing import Optional
-
 from fastapi import FastAPI
 from fastapi.responses import PlainTextResponse
 from prometheus_client import (
     Counter,
     Gauge,
     Histogram,
-    CollectorRegistry,
     generate_latest,
     CONTENT_TYPE_LATEST,
     REGISTRY,

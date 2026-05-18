@@ -6,13 +6,13 @@ ones we thought to test manually.
 """
 
 import pytest
-from hypothesis import given, settings, assume, HealthCheck
+from hypothesis import given, settings, HealthCheck
 from hypothesis.strategies import (
-    text, sampled_from, lists, builds, integers, tuples, just, one_of,
+    text, sampled_from, lists, integers,
 )
 
 from orchestrator.state.models import (
-    Task, TaskStatus, Platform, WorkflowStatus,
+    Task, TaskStatus, Platform,
     classify_task, can_transition, transition_task,
     check_dependencies, should_retry, cascade_failure,
     KEYWORD_RULES, VALID_TRANSITIONS,

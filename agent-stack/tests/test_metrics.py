@@ -3,17 +3,13 @@
 Covers metric registration, counter increments, and the /metrics HTTP endpoint.
 """
 
-from __future__ import annotations
-
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-from prometheus_client import REGISTRY
 
 from orchestrator.metrics import (
     WORKFLOWS_TOTAL,
     TASKS_TOTAL,
-    CIRCUIT_BREAKER_STATE,
     setup_metrics,
     set_circuit_breaker_state,
 )

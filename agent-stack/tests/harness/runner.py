@@ -21,19 +21,13 @@ Usage:
     python -m tests.harness.runner --report
 """
 
-from __future__ import annotations
-
 import argparse
 import asyncio
 import json
-import sqlite3
 import sys
-import time
-import uuid
-from dataclasses import dataclass, field, asdict
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Optional
 
 # Add project root to path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent

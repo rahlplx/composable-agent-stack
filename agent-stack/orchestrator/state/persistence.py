@@ -7,15 +7,13 @@ for production deployments.
 Schema matches the reference design from orchestrator-design-implementation-reference.md.
 """
 
-from __future__ import annotations
-
 import uuid
 from datetime import datetime, timezone
 from typing import Any, Optional, Sequence
 
 from sqlalchemy import (
-    Column, String, Text, Integer, Float, DateTime, JSON,
-    ForeignKey, Index, ARRAY, Enum as SAEnum,
+    Column, String, Text, Integer, DateTime,
+    ForeignKey, Index, ARRAY,
 )
 from sqlalchemy.dialects.postgresql import UUID as PGUUID, JSONB
 from sqlalchemy.ext.asyncio import (
@@ -24,7 +22,6 @@ from sqlalchemy.ext.asyncio import (
 from sqlalchemy.orm import DeclarativeBase, relationship, selectinload
 from sqlalchemy import select, update, delete
 
-from orchestrator.state.models import TaskStatus, WorkflowStatus, Platform
 
 
 # ─── SQLAlchemy Base ────────────────────────────────────────────────────────

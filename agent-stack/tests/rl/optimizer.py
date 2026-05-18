@@ -28,12 +28,9 @@ Usage:
     report = await optimizer.flaky_report()
 """
 
-from __future__ import annotations
-
-import json
 import sqlite3
 import uuid
-from dataclasses import dataclass, field, asdict
+from dataclasses import dataclass, asdict
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
@@ -111,7 +108,7 @@ class ScoreEntry:
         return asdict(self)
 
     @classmethod
-    def from_row(cls, row: sqlite3.Row) -> ScoreEntry:
+    def from_row(cls, row: sqlite3.Row) -> "ScoreEntry":
         return cls(**dict(row))
 
 

@@ -4,12 +4,9 @@ All platform adapters (Agent-S, Browser Use, OpenHands) implement
 this interface so the orchestrator can dispatch tasks uniformly.
 """
 
-from __future__ import annotations
-
 import abc
-import uuid
-from dataclasses import dataclass, field
-from typing import Any, Optional
+from dataclasses import dataclass
+from typing import Any
 
 
 @dataclass

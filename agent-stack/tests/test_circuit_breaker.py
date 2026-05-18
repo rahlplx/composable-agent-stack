@@ -3,8 +3,6 @@
 Covers all state transitions and adapter method wrapping.
 """
 
-from __future__ import annotations
-
 import time
 from unittest.mock import AsyncMock
 

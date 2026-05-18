@@ -16,12 +16,10 @@ Key features:
 - Dead letter: tasks that fail N times go to DLQ
 """
 
-from __future__ import annotations
-
 import json
 import uuid
 from datetime import datetime, timezone
-from typing import Any, Optional
+from typing import Optional
 
 import redis.asyncio as aioredis
 

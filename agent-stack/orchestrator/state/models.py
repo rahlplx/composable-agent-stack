@@ -4,13 +4,11 @@ Implements the 6-state machine (PENDING→QUEUED→RUNNING→COMPLETED/FAILED/SK
 with retry logic, dependency resolution, and platform dispatch.
 """
 
-from __future__ import annotations
-
 import enum
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Any, Optional
+from typing import Any
 
 
 class TaskStatus(str, enum.Enum):

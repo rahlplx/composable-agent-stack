@@ -7,7 +7,7 @@ covering all REST endpoints defined in orchestrator.api.app.
 import pytest
 from httpx import AsyncClient, ASGITransport
 
-from orchestrator.api.app import app, lifespan
+from orchestrator.api.app import app
 from orchestrator.compression.manager import CompressionManager
 from orchestrator.api.orchestrator import OrchestratorService
 

@@ -10,33 +10,27 @@ Combines:
 This is the main entry point for the composable agent stack.
 """
 
-from __future__ import annotations
-
 import asyncio
-import json
-import uuid
-from contextlib import asynccontextmanager
 from datetime import datetime, timezone
-from typing import Any, Optional
+from typing import Any
 
-from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
-from fastapi.middleware.cors import CORSMiddleware
+from fastapi import WebSocket, WebSocketDisconnect
 from pydantic import BaseModel, Field
 
-from orchestrator.compression.manager import CompressionManager, Priority
+from orchestrator.compression.manager import CompressionManager
 from orchestrator.state.models import (
     Task, Workflow, TaskStatus, WorkflowStatus, Platform,
-    classify_task, decompose_request, build_dependency_dag,
+    decompose_request, build_dependency_dag,
     transition_task, check_dependencies, should_retry, cascade_failure,
 )
 from orchestrator.adapters.agents import AgentSAdapter
 from orchestrator.adapters.browser import BrowserUseAdapter
 from orchestrator.adapters.openhands import OpenHandsAdapter
 from orchestrator.adapters.base import PlatformAdapter
-from orchestrator.adapters.circuit_breaker import CircuitBreaker, CircuitState
+from orchestrator.adapters.circuit_breaker import CircuitBreaker
 from orchestrator.metrics import (
     WORKFLOWS_TOTAL, TASKS_TOTAL, TASK_DURATION_SECONDS,
-    ACTIVE_TASKS, COMPRESSION_BYTES, set_circuit_breaker_state,
+    ACTIVE_TASKS, set_circuit_breaker_state,
 )
 
 

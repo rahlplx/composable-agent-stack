@@ -4,10 +4,7 @@ Wraps OpenHands code agent (headless CLI mode)
 connected via LiteLLM alias `openhands-smart`.
 """
 
-from __future__ import annotations
-
 import uuid
-from typing import Any
 
 import httpx
 

@@ -14,11 +14,11 @@ import pytest
 
 from orchestrator.compression.manager import CompressionManager, Priority
 from orchestrator.state.models import (
-    Task, TaskStatus, Platform, Workflow,
+    Task, TaskStatus, Platform,
     transition_task, cascade_failure, check_dependencies, should_retry,
 )
 from orchestrator.api.orchestrator import OrchestratorService, SubmitWorkflowRequest
-from tests.harness.factories import TaskFactory, WorkflowFactory
+from tests.harness.factories import TaskFactory
 from tests.harness.mocks import MockPlatformAdapter, FlakyAdapter, SlowAdapter
 
 

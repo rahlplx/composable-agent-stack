@@ -4,10 +4,7 @@ Wraps Browser Use web automation (navigate, extract, click)
 connected via LiteLLM alias `browser-smart`.
 """
 
-from __future__ import annotations
-
 import uuid
-from typing import Any
 
 import httpx
 

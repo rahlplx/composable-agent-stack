@@ -7,13 +7,12 @@ Measures:
 - Memory: session growth rate
 """
 
-import asyncio
 import time
 import pytest
 
-from orchestrator.compression.manager import CompressionManager, Priority
+from orchestrator.compression.manager import CompressionManager
 from orchestrator.api.orchestrator import OrchestratorService, SubmitWorkflowRequest
-from orchestrator.state.models import TaskStatus, Platform
+from orchestrator.state.models import Platform
 from tests.harness.mocks import MockPlatformAdapter
 
 

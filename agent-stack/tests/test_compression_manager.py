@@ -3,8 +3,6 @@
 Critical path testing for the AI's own context management tool.
 """
 
-import asyncio
-import json
 from pathlib import Path
 
 import pytest
