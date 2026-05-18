@@ -15,8 +15,16 @@ from orchestrator.state.models import (
     Task, TaskStatus, Platform, WorkflowStatus,
     classify_task, can_transition, transition_task,
     check_dependencies, should_retry, cascade_failure,
-    VALID_TRANSITIONS,
+    KEYWORD_RULES, VALID_TRANSITIONS,
 )
+
+# Derive ALL known keywords from the source of truth (KEYWORD_RULES)
+# This ensures the property test never goes stale if keywords change
+_ALL_KEYWORDS: list[str] = [
+    kw.lower()
+    for rule in KEYWORD_RULES
+    for kw in rule["keywords"]
+]
 
 
 # ─── Strategies ──────────────────────────────────────────────────────────────
@@ -111,10 +119,8 @@ class TestClassificationInvariants:
     @settings(max_examples=50, suppress_health_check=[HealthCheck.too_slow])
     def test_empty_or_garbage_returns_low_confidence(self, request):
         """Pure noise should get low or medium confidence."""
-        # Only check if no keywords match
-        keywords = ["web", "browser", "site", "scrape", "url", "desktop", "click",
-                     "app", "excel", "code", "program", "script", "function"]
-        has_keyword = any(kw in request.lower() for kw in keywords)
+        # Only check if no keywords match — use ALL keywords from KEYWORD_RULES
+        has_keyword = any(kw in request.lower() for kw in _ALL_KEYWORDS)
         if not has_keyword:
             platform, confidence = classify_task(request)
             assert confidence in ("low", "medium")

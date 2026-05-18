@@ -25,3 +25,20 @@ Stage Summary:
 - Prometheus /metrics endpoint wired into FastAPI
 - RL test harness runner created for CI budget-based test selection
 - 18 source files, 25 test files, comprehensive enterprise test coverage
+
+---
+Task ID: 2
+Agent: Super Z (main)
+Task: Verify project health, fix property test failure, present full architecture
+
+Work Log:
+- Located project at `/home/z/my-project/agent-stack/` — all files intact
+- Ran full test suite: 215 passed, 1 FAILED
+- Root cause: Hypothesis property test `test_empty_or_garbage_returns_low_confidence` had incomplete keyword filter (13/27 keywords), causing "MENU" to be classified as "high" confidence
+- Fix: Changed property test to derive ALL keywords from KEYWORD_RULES source of truth (DRY), eliminating stale sync issues
+- Re-ran test suite: 216/216 passed, 0 failures, 0 warnings (3.64s)
+
+Stage Summary:
+- Found and fixed 1 property test bug via Hypothesis fuzzing
+- Test now dynamically imports keywords from KEYWORD_RULES — future keyword additions won't break the test
+- 216/216 tests green, 0 warnings
