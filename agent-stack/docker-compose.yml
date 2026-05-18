@@ -1,0 +1,83 @@
+# Docker Compose — Composable Agent Stack
+# Services: Orchestrator + LiteLLM + Redis + PostgreSQL + Ollama
+#
+# Usage:
+#   docker compose up -d
+#   curl http://localhost:8080/health
+
+services:
+  orchestrator:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - AGENT_STACK_LITELLM_BASE_URL=http://litellm:4000
+      - AGENT_STACK_REDIS_URL=redis://redis:6379/0
+      - AGENT_STACK_POSTGRES_URL=postgresql+asyncpg://agent:agent@postgres:5432/agent_stack
+      - AGENT_STACK_LITELLM_API_KEY=${LITELLM_MASTER_KEY}
+    volumes:
+      - orchestrator_data:/app/data
+    depends_on:
+      - litellm
+      - redis
+      - postgres
+    restart: unless-stopped
+
+  litellm:
+    image: ghcr.io/berriai/litellm:main-latest
+    ports:
+      - "4000:4000"
+    environment:
+      - LITELLM_MASTER_KEY=${LITELLM_MASTER_KEY}
+      - OPENAI_API_KEY_1=${OPENAI_API_KEY_1}
+      - OPENAI_API_KEY_2=${OPENAI_API_KEY_2}
+      - OPENAI_API_KEY_3=${OPENAI_API_KEY_3}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - DATABASE_URL=postgresql://litellm:litellm@postgres:5432/litellm
+    volumes:
+      - ./config/litellm_config.yaml:/app/config.yaml:ro
+    command: --config /app/config.yaml
+    depends_on:
+      - postgres
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: agent
+      POSTGRES_PASSWORD: agent
+      POSTGRES_DB: agent_stack
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./config/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    restart: unless-stopped
+
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: [gpu]
+    restart: unless-stopped
+
+volumes:
+  orchestrator_data:
+  redis_data:
+  postgres_data:
+  ollama_data:
