@@ -101,3 +101,30 @@ Stage Summary:
 - API contract: 4 endpoints (submit, status, result, cancel) + async callback
 - 6 troubleshooting entries: coordinate mismatch, React race condition, missing packages, phantom 429, resource leak, silent callback loss
 - 4 optimization tables: LLM (4 techniques), Browser Use (4), Agent-S (4), OpenHands (4)
+
+---
+Task ID: 6
+Agent: Main Agent
+Task: Build execution-ready knowledge base from source-verified analysis of all 4 repos
+
+Work Log:
+- Read all 4 existing compressed reference files into context
+- Cloned all 4 repos: Agent-S, Browser Use, OpenHands, LiteLLM to /home/z/my-project/download/agent-stack-sources/
+- Launched 3 parallel Explore agents to analyze Agent-S, Browser Use, OpenHands source code
+- LiteLLM reference was already complete from previous work
+- Discovered 8 critical corrections between documentation assumptions and actual source code
+- Compiled all findings into single execution-ready knowledge base (559 lines, ~21KB)
+- Saved to /home/z/my-project/upload/EXECUTION_READY_KNOWLEDGE_BASE.md
+
+Stage Summary:
+- CRITICAL CORRECTIONS found:
+  1. Browser Use uses cdp-use NOT Playwright
+  2. ChatLiteLLM uses api_base NOT base_url
+  3. OpenHands has NO CLI binary -- use Python SDK LocalConversation
+  4. Agent-S has NO headless mode -- always controls local desktop
+  5. Agent-S requires TWO LLM configs (worker + grounding)
+  6. Browser Use defaults to ChatBrowserUse cloud if no LLM specified
+  7. OpenHands default model rewrites openhands/* → litellm_proxy/*
+  8. Agent-S has NO config files — all via CLI args/constructor params
+- Verified all LLM integration paths, constructor signatures, CLI entry points
+- Defined 5-phase execution order: LiteLLM → Browser Use → OpenHands → Agent-S → Orchestrator
