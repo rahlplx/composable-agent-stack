@@ -39,3 +39,22 @@ Stage Summary:
 - 6 Prometheus metrics with labels documented
 - 4 alert rules with PromQL expressions
 - 8 troubleshooting scenarios with fixes
+
+---
+Task ID: 3
+Agent: Main Agent
+Task: Save AI-compressed Browser Use architecture deep dive reference
+
+Work Log:
+- Received extensive Browser Use architecture knowledge (DOM extraction, element detection, multi-tab, LLM integration, anti-detection, scaling, monitoring, token optimization)
+- Compressed ~5000-word prose into ~12KB structured markdown (309 lines)
+- Organized into: architecture diagram, DOM pipeline, element detection API, multi-tab management, 3 LLM integration methods, dynamic model selection, multi-model test script, token optimization, anti-detection matrix, scaling/resource requirements, session persistence, monitoring, troubleshooting, stack integration mapping
+- All code examples preserved (ChatLiteLLM, ChatOpenAI, browser isolation, monitored_run wrapper)
+- Saved to /home/z/my-project/upload/agent-s-architecture-deep-dive.md
+
+Stage Summary:
+- Browser Use architecture reference compressed and saved
+- Key insights captured: real Chromium via Playwright, structured prompts (not raw HTML) to LLM, single-threaded per agent, no native checkpointing, ~2-5GB RAM per session, coordinate clicking for Claude only
+- 3 LLM routing methods documented: ChatLiteLLM (recommended), ChatOpenAI with base_url, ChatAnthropic with base_url
+- Anti-detection: basic only (extensions + real profile), no WebDriver fingerprint removal
+- 10 concurrent sessions: 16+ cores, 100-128GB RAM recommended
