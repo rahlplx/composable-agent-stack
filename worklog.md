@@ -78,3 +78,26 @@ Stage Summary:
 - Custom sandbox: Dockerfile with Python 3.12 + Node.js 20 + Go 1.22
 - Security: 6 concerns with mitigations (sandbox isolation, branch protection, prompt injection sanitization)
 - 10 troubleshooting entries covering common CI/CD failures
+
+---
+Task ID: 5
+Agent: Main Agent
+Task: Save AI-compressed orchestrator design & implementation reference
+
+Work Log:
+- Received comprehensive orchestrator design guide (~5000 words): architecture, task dispatch algorithm, state management, error handling decision tree, API contracts, end-to-end workflow, 6 troubleshooting scenarios, performance optimization
+- Compressed into structured markdown (366 lines, ~16KB)
+- Key architectural decisions captured: FastAPI + Redis Streams + PostgreSQL, platform adapter pattern with uniform REST API, state machine per subtask (6 states)
+- Preserved: task dispatch heuristics table, database schema SQL, Python pseudocode for Orchestrator class, price monitoring workflow decomposition
+- 6 integration failure scenarios with root cause + fix in table format
+- Performance optimization tables for all 4 layers (LLM, Browser Use, Agent-S, OpenHands)
+- Saved to /home/z/my-project/upload/orchestrator-design-implementation-reference.md
+
+Stage Summary:
+- Orchestrator reference compressed and saved
+- Core design: FastAPI async + Redis Streams task queue + PostgreSQL state DB + WebSocket status
+- State machine: PENDING → QUEUED → RUNNING → COMPLETED/FAILED/SKIPPED with retry logic
+- Error handling: exponential backoff (1s, 2s, 4s), max 3 retries, then alternate platform or human escalation
+- API contract: 4 endpoints (submit, status, result, cancel) + async callback
+- 6 troubleshooting entries: coordinate mismatch, React race condition, missing packages, phantom 429, resource leak, silent callback loss
+- 4 optimization tables: LLM (4 techniques), Browser Use (4), Agent-S (4), OpenHands (4)
