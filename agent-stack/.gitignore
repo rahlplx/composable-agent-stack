@@ -1,0 +1,47 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.hypothesis/
+coverage.xml
+*.cover
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Data (SQLite DBs, runtime data)
+data/*.db
+data/*.db-journal
+data/*.db-wal
+
+# Environment
+.env
+.env.local
+
+# Docker volumes
+postgres_data/
+redis_data/
+ollama_data/
