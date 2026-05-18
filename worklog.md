@@ -58,3 +58,23 @@ Stage Summary:
 - 3 LLM routing methods documented: ChatLiteLLM (recommended), ChatOpenAI with base_url, ChatAnthropic with base_url
 - Anti-detection: basic only (extensions + real profile), no WebDriver fingerprint removal
 - 10 concurrent sessions: 16+ cores, 100-128GB RAM recommended
+
+---
+Task ID: 4
+Agent: Main Agent
+Task: Save AI-compressed OpenHands CI/CD & headless operation reference
+
+Work Log:
+- Received GitHub Actions workflow YAML for OpenHands autonomous PR remediation
+- Analyzed workflow: 6-step pipeline (checkout → diff extraction → headless execution → pytest → commit → PR comment)
+- Expanded into comprehensive reference covering: CLI flags, env vars, JSONL output format, LiteLLM integration, 5 advanced CI/CD patterns, custom sandbox Dockerfile, Docker Compose, monitoring, security, troubleshooting
+- Compressed into structured markdown (404 lines, ~14KB)
+- Saved to /home/z/my-project/upload/openhands-cicd-headless-reference.md
+
+Stage Summary:
+- OpenHands headless CLI reference compressed and saved
+- Key insights: --headless --json -f flags, LLM_MODEL format (litellm_proxy/<alias>), SANDBOX_VOLUMES for file I/O, MAX_ITERATIONS for safety
+- 5 advanced CI/CD patterns: multi-stage pipeline, branch protection bypass, conditional model selection, timeout safety, rich PR context
+- Custom sandbox: Dockerfile with Python 3.12 + Node.js 20 + Go 1.22
+- Security: 6 concerns with mitigations (sandbox isolation, branch protection, prompt injection sanitization)
+- 10 troubleshooting entries covering common CI/CD failures
